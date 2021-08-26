@@ -2,7 +2,7 @@
     "name": "favorite-folders",
     "displayName": "Favorite Folders",
     "description": "Open your favorite folders from the sidebar",
-    "version": "0.0.1",
+    "version": "1.0.0",
     "publisher": "Artelin",
     "repository": "flawiddsouza/favorite-folders",
     "engines": {

@@ -56,17 +56,21 @@ class FavoriteFolders implements vscode.TreeDataProvider<TreeItem> {
 
         baseFolders.forEach(baseFolder => {
             const baseFolderExpanded = baseFolder.replace('~', homeDirectory)
-            this.data.push(
-                new TreeItem(
-                    baseFolder,
-                    baseFolder,
-                    readdirSync(baseFolderExpanded, { withFileTypes: true })
-                    .filter(item => item.isDirectory())
-                    .map(item => item.name)
-                    .sort(sortArray)
-                    .map(item => new TreeItem(item, path.join(baseFolderExpanded, item)))
+            try {
+                this.data.push(
+                    new TreeItem(
+                        baseFolder,
+                        baseFolderExpanded,
+                        readdirSync(baseFolderExpanded, { withFileTypes: true })
+                        .filter(item => item.isDirectory())
+                        .map(item => item.name)
+                        .sort(sortArray)
+                        .map(item => new TreeItem(item, path.join(baseFolderExpanded, item)))
+                    )
                 )
-            )
+            } catch (e) {
+                vscode.window.showWarningMessage(`Favorite Folders: ${baseFolder} does not exist on your system`)
+            }
         })
 
         this._onDidChangeTreeData.fire()

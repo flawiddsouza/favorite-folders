@@ -1,26 +1,82 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from 'vscode';
+import * as vscode from 'vscode'
+import { readdirSync } from 'fs'
+import path = require('path')
+import os = require('os')
 
-// this method is called when your extension is activated
-// your extension is activated the very first time the command is executed
-export function activate(context: vscode.ExtensionContext) {
-	
-	// Use the console to output diagnostic information (console.log) and errors (console.error)
-	// This line of code will only be executed once when your extension is activated
-	console.log('Congratulations, your extension "favorite-folders" is now active!');
+class TreeItem extends vscode.TreeItem {
+    children: TreeItem[] | undefined
+    absoluteFolderPath: string
 
-	// The command has been defined in the package.json file
-	// Now provide the implementation of the command with registerCommand
-	// The commandId parameter must match the command field in package.json
-	let disposable = vscode.commands.registerCommand('favorite-folders.helloWorld', () => {
-		// The code you place here will be executed every time your command is executed
-		// Display a message box to the user
-		vscode.window.showInformationMessage('Hello World from Favorite Folders!');
-	});
+    constructor(label: string, absoluteFolderPath: string, children?: TreeItem[]) {
+        super(label, children === undefined ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Expanded)
+        this.children = children
+        this.absoluteFolderPath = absoluteFolderPath
+    }
 
-	context.subscriptions.push(disposable);
+    iconPath = new vscode.ThemeIcon('symbol-folder')
+
+    openFolder(newWindow = false) {
+        const uri = vscode.Uri.file(this.absoluteFolderPath)
+        vscode.commands.executeCommand('vscode.openFolder', uri, newWindow)
+    }
 }
 
-// this method is called when your extension is deactivated
-export function deactivate() {}
+const homeDirectory: string = os.homedir()
+
+function sortArray(a: string, b: string) {
+    return a.localeCompare(b)
+}
+
+class FavoriteFolders implements vscode.TreeDataProvider<TreeItem> {
+    private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>()
+    readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event
+
+    data: TreeItem[] = []
+
+    constructor() {
+        this.refreshFolders()
+    }
+
+    getTreeItem(element: TreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
+        return element
+    }
+
+    getChildren(element?: TreeItem | undefined): vscode.ProviderResult<TreeItem[]> {
+        if (element === undefined) {
+            return this.data
+        }
+        return element.children
+    }
+
+    refreshFolders() {
+        const configuration = vscode.workspace.getConfiguration('favoriteFolders')
+        const baseFolders: Array<string> = configuration.get('baseFolders') ?? []
+
+        this.data = []
+
+        baseFolders.forEach(baseFolder => {
+            const baseFolderExpanded = baseFolder.replace('~', homeDirectory)
+            this.data.push(
+                new TreeItem(
+                    baseFolder,
+                    baseFolder,
+                    readdirSync(baseFolderExpanded, { withFileTypes: true })
+                    .filter(item => item.isDirectory())
+                    .map(item => item.name)
+                    .sort(sortArray)
+                    .map(item => new TreeItem(item, path.join(baseFolderExpanded, item)))
+                )
+            )
+        })
+
+        this._onDidChangeTreeData.fire()
+    }
+}
+
+export function activate(_context: vscode.ExtensionContext) {
+    const favoriteFolders = new FavoriteFolders()
+    vscode.window.registerTreeDataProvider('favoriteFolders', favoriteFolders)
+    vscode.commands.registerCommand('favoriteFolders.refreshFolders', () => favoriteFolders.refreshFolders())
+    vscode.commands.registerCommand('favoriteFolders.openFolder', treeItem => treeItem.openFolder())
+    vscode.commands.registerCommand('favoriteFolders.openFolderInNewWindow', treeItem => treeItem.openFolder(true))
+}

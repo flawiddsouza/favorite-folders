@@ -3,6 +3,8 @@
     "displayName": "Favorite Folders",
     "description": "Open your favorite folders from the sidebar",
     "version": "0.0.1",
+    "publisher": "Artelin",
+    "repository": "flawiddsouza/favorite-folders",
     "engines": {
         "vscode": "^1.59.0"
     },

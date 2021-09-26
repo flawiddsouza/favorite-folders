@@ -27,13 +27,18 @@ function sortArray(a: string, b: string) {
     return a.localeCompare(b)
 }
 
+const extensionNamespace: string = 'favoriteFolders'
+
 class FavoriteFolders implements vscode.TreeDataProvider<TreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<TreeItem | undefined | null | void> = new vscode.EventEmitter<TreeItem | undefined | null | void>()
     readonly onDidChangeTreeData: vscode.Event<TreeItem | undefined | null | void> = this._onDidChangeTreeData.event
 
     data: TreeItem[] = []
 
-    constructor() {
+    extensionContext: vscode.ExtensionContext
+
+    constructor(extensionContext: vscode.ExtensionContext) {
+        this.extensionContext = extensionContext
         this.refreshFolders()
     }
 
@@ -49,7 +54,7 @@ class FavoriteFolders implements vscode.TreeDataProvider<TreeItem> {
     }
 
     refreshFolders() {
-        const configuration = vscode.workspace.getConfiguration('favoriteFolders')
+        const configuration = vscode.workspace.getConfiguration(extensionNamespace)
         const baseFolders: Array<string> = configuration.get('baseFolders') ?? []
 
         this.data = []
@@ -75,12 +80,17 @@ class FavoriteFolders implements vscode.TreeDataProvider<TreeItem> {
 
         this._onDidChangeTreeData.fire()
     }
+
+    openSettings() {
+        vscode.commands.executeCommand('workbench.action.openSettings', `@ext:${this.extensionContext.extension.id}`)
+    }
 }
 
-export function activate(_context: vscode.ExtensionContext) {
-    const favoriteFolders = new FavoriteFolders()
-    vscode.window.registerTreeDataProvider('favoriteFolders', favoriteFolders)
-    vscode.commands.registerCommand('favoriteFolders.refreshFolders', () => favoriteFolders.refreshFolders())
-    vscode.commands.registerCommand('favoriteFolders.openFolder', treeItem => treeItem.openFolder())
-    vscode.commands.registerCommand('favoriteFolders.openFolderInNewWindow', treeItem => treeItem.openFolder(true))
+export function activate(context: vscode.ExtensionContext) {
+    const favoriteFolders = new FavoriteFolders(context)
+    vscode.window.registerTreeDataProvider(extensionNamespace, favoriteFolders)
+    vscode.commands.registerCommand(`${extensionNamespace}.refreshFolders`, () => favoriteFolders.refreshFolders())
+    vscode.commands.registerCommand(`${extensionNamespace}.openSettings`, () => favoriteFolders.openSettings())
+    vscode.commands.registerCommand(`${extensionNamespace}.openFolder`, treeItem => treeItem.openFolder())
+    vscode.commands.registerCommand(`${extensionNamespace}.openFolderInNewWindow`, treeItem => treeItem.openFolder(true))
 }

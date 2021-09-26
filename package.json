@@ -2,7 +2,7 @@
     "name": "favorite-folders",
     "displayName": "Favorite Folders",
     "description": "Open your favorite folders from the sidebar",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "publisher": "Artelin",
     "repository": "flawiddsouza/favorite-folders",
     "engines": {
@@ -42,7 +42,8 @@
                     "items": {
                         "type": "string"
                     },
-                    "description": "Indicates the base folders to search for any folder projects"
+                    "description": "Indicates the base folders to search for any folder projects",
+                    "scope": "machine"
                 }
             }
         },
@@ -51,6 +52,11 @@
                 "command": "favoriteFolders.refreshFolders",
                 "title": "Favorite Folders: Refresh Folders",
                 "icon": "$(refresh)"
+            },
+            {
+                "command": "favoriteFolders.openSettings",
+                "title": "Favorite Folders: Open Settings",
+                "icon": "$(gear)"
             },
             {
                 "command": "favoriteFolders.openFolder",
@@ -69,6 +75,11 @@
                     "command": "favoriteFolders.refreshFolders",
                     "when": "view == favoriteFolders",
                     "group": "navigation"
+                },
+                {
+                    "command": "favoriteFolders.openSettings",
+                    "when": "view == favoriteFolders",
+                    "group": "navigation@2"
                 }
             ],
             "view/item/context": [

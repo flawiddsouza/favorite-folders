@@ -4,11 +4,13 @@ import path = require('path')
 import os = require('os')
 
 class TreeItem extends vscode.TreeItem {
+    label: string
     children: TreeItem[] | undefined
     absoluteFolderPath: string
 
-    constructor(label: string, absoluteFolderPath: string, children?: TreeItem[]) {
-        super(label, children === undefined ? vscode.TreeItemCollapsibleState.None : vscode.TreeItemCollapsibleState.Expanded)
+    constructor(label: string, collapseState: vscode.TreeItemCollapsibleState, absoluteFolderPath: string, children?: TreeItem[]) {
+        super(label, collapseState)
+        this.label = label
         this.children = children
         this.absoluteFolderPath = absoluteFolderPath
     }
@@ -59,24 +61,39 @@ class FavoriteFolders implements vscode.TreeDataProvider<TreeItem> {
 
         this.data = []
 
+        const savedCollapsibleState: any = this.extensionContext.globalState.get('collapsibleState') ?? {}
+
         baseFolders.forEach(baseFolder => {
             const baseFolderExpanded = baseFolder.replace('~', homeDirectory)
+            const collapseState = baseFolder in savedCollapsibleState ? savedCollapsibleState[baseFolder] : vscode.TreeItemCollapsibleState.Expanded;
             try {
                 this.data.push(
                     new TreeItem(
                         baseFolder,
+                        collapseState,
                         baseFolderExpanded,
                         readdirSync(baseFolderExpanded, { withFileTypes: true })
                         .filter(item => item.isDirectory())
                         .map(item => item.name)
                         .sort(sortArray)
-                        .map(item => new TreeItem(item, path.join(baseFolderExpanded, item)))
+                        .map(item => new TreeItem(item, vscode.TreeItemCollapsibleState.None, path.join(baseFolderExpanded, item)))
                     )
                 )
             } catch (e) {
+                // console.log(e)
                 vscode.window.showWarningMessage(`Favorite Folders: ${baseFolder} does not exist on your system`)
             }
         })
+
+        // cleanup paths from savedCollapsibleState that are no longer present {
+        for (const baseFolder of Object.keys(savedCollapsibleState)) {
+            if (!baseFolders.includes(baseFolder)) {
+                delete savedCollapsibleState[baseFolder];
+            }
+        }
+        this.extensionContext.globalState.update('collapsibleState', savedCollapsibleState)
+        // }
+
 
         this._onDidChangeTreeData.fire()
     }
@@ -86,9 +103,23 @@ class FavoriteFolders implements vscode.TreeDataProvider<TreeItem> {
     }
 }
 
+function saveCollapsibleState(context: vscode.ExtensionContext, label: string, collapsibleState: vscode.TreeItemCollapsibleState) {
+    const savedCollapsibleState: any = context.globalState.get('collapsibleState') ?? {}
+    savedCollapsibleState[label] = collapsibleState
+    context.globalState.update('collapsibleState', savedCollapsibleState)
+}
+
 export function activate(context: vscode.ExtensionContext) {
     const favoriteFolders = new FavoriteFolders(context)
-    vscode.window.registerTreeDataProvider(extensionNamespace, favoriteFolders)
+    const treeView = vscode.window.createTreeView(extensionNamespace, {
+        treeDataProvider: favoriteFolders
+    })
+    treeView.onDidCollapseElement(e => {
+        saveCollapsibleState(context, e.element.label, vscode.TreeItemCollapsibleState.Collapsed)
+    })
+    treeView.onDidExpandElement(e => {
+        saveCollapsibleState(context, e.element.label, vscode.TreeItemCollapsibleState.Expanded)
+    })
     vscode.commands.registerCommand(`${extensionNamespace}.refreshFolders`, () => favoriteFolders.refreshFolders())
     vscode.commands.registerCommand(`${extensionNamespace}.openSettings`, () => favoriteFolders.openSettings())
     vscode.commands.registerCommand(`${extensionNamespace}.openFolder`, treeItem => treeItem.openFolder())

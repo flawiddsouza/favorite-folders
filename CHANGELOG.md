@@ -4,6 +4,10 @@ All notable changes to the "favorite-folders" extension will be documented in th
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [1.3.1] - 2023-06-10
+### Fixed
+- Collapsible state is not saved correctly for baseFoldersExtended
+
 ## [1.3.0] - 2023-06-10
 ### Added
 - Adds configuration 'favoriteFolders.baseFoldersExtended' for allowing the user to set labels to their paths. As requested [here](https://github.com/flawiddsouza/favorite-folders/issues/1).

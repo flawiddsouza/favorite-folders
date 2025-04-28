@@ -1,10 +1,10 @@
 # Favorite Folders
 
-This extension gives you a list of all the direct folders under the settings.
+This extension gives you a list of all the direct folders configured under the extension settings.
 
 ![extension](https://raw.githubusercontent.com/flawiddsouza/favorite-folders/master/media/screenshots/extension.png)
 
-## Extension settings
+## Extension Settings
 
 This extension contributes the following settings:
 
@@ -13,31 +13,31 @@ This extension contributes the following settings:
 
 ## Examples
 
-Example: specify a list of base Folders:
+Example: Specify a list of base folders:
 
 ```json
 "favoriteFolders.baseFolders": [
-    "~/reposPersonal",
-    "~/reposWork"
+    "~/repos/Personal",
+    "~/repos/Work"
 ]
 ```
 
-Example: specify a list of base Folders (with names):
+Example: Specify a list of base folders (with names):
 
 ```json
 "favoriteFolders.baseFoldersExtended": [
     {
         "name": "Personal repositories",
-        "path": "~/reposPersonal"
+        "path": "~/repos/Personal"
     },
     {
         "name": "Work repositories",
-        "path": "~/reposWork"
+        "path": "~/repos/Work"
     },
 ]
 ```
 
-## Known issues
+## Known Issues
 
 If you're on WSL, you'll see this when you open settings for the extension:
 ![settings-wsl-1](https://raw.githubusercontent.com/flawiddsouza/favorite-folders/master/media/screenshots/settings-wsl-1.png)
